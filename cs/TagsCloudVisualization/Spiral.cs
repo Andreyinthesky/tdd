@@ -20,17 +20,17 @@ namespace TagsCloudVisualization
 
         public IEnumerable<Point> GetSpiralPoints()
         {
-            double alphaAngle = 1;
+            double currentSpiralAngle = 0;
 
             while (true)
             {
-                var p = spiralStep / (2 * Math.PI) * alphaAngle;
-                var dx = Math.Cos(alphaAngle) * p;
-                var dy = Math.Sin(alphaAngle) * p;
+                var p = spiralStep / (2 * Math.PI) * currentSpiralAngle;
+                var dx = Math.Cos(currentSpiralAngle) * p;
+                var dy = Math.Sin(currentSpiralAngle) * p;
 
                 yield return new Point(spiralCenter.X + (int)dx, spiralCenter.Y + (int)dy);
 
-                alphaAngle += 0.1;
+                currentSpiralAngle += 0.05;
             }
         }
     }

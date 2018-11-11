@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
 
 namespace TagsCloudVisualization
@@ -8,33 +7,29 @@ namespace TagsCloudVisualization
     {
         static void Main(string[] args)
         {
-            var bitmap = new Bitmap(800, 600);
-            var g = Graphics.FromImage(bitmap);
-            var pen = new Pen(Brushes.Black, 1);
-            g.FillRectangle(Brushes.White, 0, 0, bitmap.Width, bitmap.Height);
-            g.DrawRectangles(pen, GetRandomRectanglesLayout(new Point(bitmap.Width / 2, bitmap.Height / 2)));
-            bitmap.Save("1.png");
+            var rectanglesCount = 25;
+            var bitmap = GetCloudImageFromRandomRectangles(rectanglesCount);
+            bitmap.Save("2.png");
         }
 
-        private static Rectangle[] GetRandomRectanglesLayout(Point centerPoint)
+        private static Bitmap GetCloudImageFromRandomRectangles(int rectanglesCount)
         {
-            var res = new List<Rectangle>();
-            var layouter = new CircularCloudLayouter(centerPoint);
+            var visualizer = new CircularCloudVisualizer(new CircularCloudLayouter());
             var random = new Random();
 
-            for (int i = 0; i < 25; i++)
+            for (int i = 0; i < rectanglesCount; i++)
             {
                 Size nextRectSize;
 
                 do
                 {
-                    nextRectSize = new Size(random.Next(128) + 32, random.Next(64) + 32);
+                    nextRectSize = new Size(random.Next(200) + 100, random.Next(100) + 100);
                 } while (nextRectSize.Width < nextRectSize.Height * 2);
 
-                res.Add(layouter.PutNextRectangle(nextRectSize));
+                visualizer.Layouter.PutNextRectangle(nextRectSize);
             }
 
-            return res.ToArray();
+            return visualizer.GetCloudImage();
         }
     }
 }

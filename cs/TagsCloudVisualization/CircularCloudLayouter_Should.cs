@@ -1,7 +1,9 @@
 ﻿using FluentAssertions;
 using NUnit.Framework;
+using NUnit.Framework.Interfaces;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 
@@ -11,11 +13,52 @@ namespace TagsCloudVisualization
     public class CircularCloudLayouter_Should
     {
         private CircularCloudLayouter layouter;
+        private List<Rectangle> rectangles;
+        private CircularCloudVisualizer visualizer;
 
         [SetUp]
         public void SetUp()
         {
             layouter = new CircularCloudLayouter();
+            rectangles = new List<Rectangle>();
+            visualizer = new CircularCloudVisualizer(layouter);
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            if (TestContext.CurrentContext.Result.Outcome.Status != TestStatus.Passed)
+            {
+                var directory = TestContext.CurrentContext.TestDirectory;
+                var testName = TestContext.CurrentContext.Test.Name;
+                var path = $"{directory}/{testName}.png";
+                var image = visualizer.GetCloudImage();
+                image.Save(path);
+                TestContext.WriteLine($"Tag cloud visualization saved to file {path}");
+            }
+        }
+
+        [Test]
+        public void GetPlacedRectangles_AfterCreation_ListShouldBeEmpty()
+        {
+            layouter.GetPlacedRectangles()
+                .Any()
+                .Should()
+                .BeFalse();
+        }
+
+        [TestCaseSource(nameof(MultipleRectanglesTestCase))]
+        public void GetPlacedRectangles_WhenPutMultipleRectangles_ListShouldBeCorrect(Size[] rectangleSizes)
+        {
+            foreach (var size in rectangleSizes)
+            {
+                layouter.PutNextRectangle(size);
+            }
+
+            layouter.GetPlacedRectangles()
+                .Count()
+                .Should()
+                .Be(rectangleSizes.Length);
         }
 
         [TestCase(1, 0, TestName = "width is positive, height is zero")]
@@ -55,30 +98,97 @@ namespace TagsCloudVisualization
                 .Be(sizeHeight);
         }
 
-        [TestCaseSource(nameof(RectanglesAreIntersectedTestCases))]
-        public void PutNextRectangle_WhenPuttedTwoRectangles_RectanglesAreNotIntersected(Size[] rectangleSizes)
+        [Test]
+        public void PutNextRectangle_WhenPutOneRectangle_RectangleShouldBeInCenter()
         {
-            var rectangles = rectangleSizes.Select(size => layouter.PutNextRectangle(size))
-                .ToList();
-
-            Assert
-                .IsFalse(rectangles[0].IntersectsWith(rectangles[1]), $"failed on size1: {rectangleSizes[0]}, size2:{rectangleSizes[1]}");
+            var firstRectangle = layouter.PutNextRectangle(new Size(128, 128));
+            firstRectangle.GetCenterPoint()
+                .Should()
+                .Be(layouter.Center);
         }
 
-        private static IEnumerable RectanglesAreIntersectedTestCases
+        [Test]
+        public void PutNextRectangle_WhenPutTwoRectangles_RectanglesDoNotIntersect()
+        {
+            var firstRectangle = layouter.PutNextRectangle(new Size(128, 128));
+            var secondRectangle = layouter.PutNextRectangle(new Size(64, 64));
+            firstRectangle.IntersectsWith(secondRectangle)
+                .Should()
+                .BeFalse();
+        }
+
+        [TestCaseSource(nameof(MultipleRectanglesTestCase))]
+        public void PutNextRectangle_WhenPutMultipleRectangles_RectanglesDoNotIntersect(Size[] rectangleSizes)
+        {
+            foreach (var size in rectangleSizes)
+            {
+                var newRectangle = layouter.PutNextRectangle(size);
+                rectangles.ForEach(rect => rect.IntersectsWith(newRectangle)
+                    .Should()
+                    .BeFalse());
+                rectangles.Add(newRectangle);
+            }
+        }
+
+        [TestCaseSource(nameof(MultipleRectanglesTestCase))]
+        public void PutNextRectangle_WhenPutMultipleRectangles_RectanglesShouldBeTightly(Size[] rectangleSizes)
+        {
+            var cloudSquare = 0;
+
+            foreach (var size in rectangleSizes)
+            {
+                var newRectangle = layouter.PutNextRectangle(size);
+                rectangles.ForEach(rect => rect.IntersectsWith(newRectangle)
+                    .Should()
+                    .BeFalse());
+                cloudSquare += newRectangle.Width * newRectangle.Height;
+
+                rectangles.Add(newRectangle);
+            }
+
+            var circleSquare = Math.PI * Math.Pow(layouter.CircleRadius, 2);
+            (cloudSquare / circleSquare).Should()
+                .BeGreaterThan(0.6);
+        }
+
+        [TestCaseSource(nameof(PerformanceTestCase)), Timeout(3000)]
+        public void PutNextRectangle_WhenPutTooManyRectangles(Size[] rectangleSizes)
+        {
+            foreach (var rectangleSize in rectangleSizes)
+            {
+                layouter.PutNextRectangle(rectangleSize);
+            }
+        }
+
+        private static IEnumerable MultipleRectanglesTestCase
         {
             get
             {
                 var random = new Random();
+                var rectangleSizes = new Size[100];
 
-                for (int i = 0; i < 100; i++)
+                for (int i = 0; i < rectangleSizes.Length; i++)
                 {
-                    yield return new TestCaseData(new[]
-                    {
-                        new Size(random.Next(100) + 1, random.Next(100) + 1),
-                        new Size(random.Next(100) + 1, random.Next(100) + 1)
-                    });
+                    rectangleSizes[i] = new Size(random.Next(200) + 32, random.Next(100) + 32);
                 }
+
+                yield return rectangleSizes;
+            }
+        }
+
+        private static IEnumerable PerformanceTestCase
+        {
+            get
+            {
+                var random = new Random();
+                var rectangleSizes = new Size[1000];
+
+                for (int i = 0; i < rectangleSizes.Length; i++)
+                {
+                    rectangleSizes[i] = new Size(random.Next(200) + 1, random.Next(100) + 1);
+                }
+
+                yield return rectangleSizes;
             }
         }
     }
