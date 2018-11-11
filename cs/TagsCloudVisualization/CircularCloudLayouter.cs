@@ -16,14 +16,14 @@ namespace TagsCloudVisualization
         public CircularCloudLayouter()
         {
             Center = new Point(0, 0);
-            spiralEnumerator = new Spiral(Center, 1).GetSpiralPoints()
+            spiralEnumerator = new Spiral(Center, 5).GetSpiralPoints()
                 .GetEnumerator();
         }
 
         public CircularCloudLayouter(Point center)
         {
             Center = center;
-            spiralEnumerator = new Spiral(Center, 1).GetSpiralPoints()
+            spiralEnumerator = new Spiral(Center, 5).GetSpiralPoints()
                 .GetEnumerator();
         }
 

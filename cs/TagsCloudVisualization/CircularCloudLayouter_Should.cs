@@ -151,7 +151,7 @@ namespace TagsCloudVisualization
                 .BeGreaterThan(0.6);
         }
 
-        [TestCaseSource(nameof(PerformanceTestCase)), Timeout(3000)]
+        [TestCaseSource(nameof(PerformanceTestCase)), Timeout(1000)]
         public void PutNextRectangle_WhenPutTooManyRectangles(Size[] rectangleSizes)
         {
             foreach (var rectangleSize in rectangleSizes)
