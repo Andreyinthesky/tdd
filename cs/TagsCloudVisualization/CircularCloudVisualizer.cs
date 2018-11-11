@@ -23,7 +23,7 @@ namespace TagsCloudVisualization
 
         private void DrawRectangles(Graphics graphics, Size imageSize)
         {
-            var pen = new Pen(Brushes.Black, 1);
+            var pen = new Pen(Brushes.Black, 2);
 
             graphics.FillRectangle(Brushes.White, 0, 0, imageSize.Width, imageSize.Height);
 
