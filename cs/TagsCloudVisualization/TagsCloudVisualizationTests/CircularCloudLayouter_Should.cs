@@ -5,6 +5,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 
 namespace TagsCloudVisualization
@@ -30,8 +31,9 @@ namespace TagsCloudVisualization
             if (TestContext.CurrentContext.Result.Outcome.Status != TestStatus.Passed)
             {
                 var directory = TestContext.CurrentContext.TestDirectory;
-                var testName = TestContext.CurrentContext.Test.Name;
-                var path = $"{directory}/{testName}.png";
+                var fileExtension = ".png";
+                var fileName = TestContext.CurrentContext.Test.Name + fileExtension;
+                var path = Path.Combine(directory, fileName);
                 var image = visualizer.GetCloudImage();
                 image.Save(path);
                 TestContext.WriteLine($"Tag cloud visualization saved to file {path}");

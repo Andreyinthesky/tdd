@@ -79,41 +79,32 @@ namespace TagsCloudVisualization
 
         private Rectangle ShiftRectangleToCloudCenter(Rectangle rect)
         {
-            return ShiftRectangleToCloudCenterAlongY(ShiftRectangleToCloudCenterAlongX(rect));
-        }
-
-        private Rectangle ShiftRectangleToCloudCenterAlongX(Rectangle rect)
-        {
             var rectCenter = rect.GetCenterPoint();
-            var dx = rectCenter.X - Center.X > 0 ? -1 : 1;
+            var isShiftedAlongX = rectCenter.X - Center.X == 0;
+            var isShiftedAlongY = rectCenter.Y - Center.Y == 0;
+            var dx = rectCenter.X - Center.X > 0 ? (isShiftedAlongX ? 0 : -1) : 1;
+            var dy = isShiftedAlongX ? (rectCenter.Y - Center.Y > 0 ? -1 : 1) : 0;
 
-            while (Math.Abs(rectCenter.X - Center.X) > 0)
+            while (!isShiftedAlongX || !isShiftedAlongY)
             {
-                var newRect = GetRectangleByCenterPoint(new Point(rectCenter.X + dx, rectCenter.Y), rect.Size);
+                var newRect = GetRectangleByCenterPoint(new Point(rectCenter.X + dx, rectCenter.Y + dy), rect.Size);
 
-                if (newRect.IntersectWith(placedRectangles))
+                if (rectCenter.Y - Center.Y == 0)
                 {
-                    break;
+                    isShiftedAlongY = true;
                 }
 
-                rectCenter = newRect.GetCenterPoint();
-                rect = newRect;
-            }
-
-            return rect;
-        }
-
-        private Rectangle ShiftRectangleToCloudCenterAlongY(Rectangle rect)
-        {
-            var rectCenter = rect.GetCenterPoint();
-            var dy = rectCenter.Y - Center.Y > 0 ? -1 : 1;
-
-            while (Math.Abs(rectCenter.Y - Center.Y) > 0)
-            {
-                var newRect = GetRectangleByCenterPoint(new Point(rectCenter.X, rectCenter.Y + dy), rect.Size);
-
-                if (newRect.IntersectWith(placedRectangles))
+                if (newRect.IntersectWith(placedRectangles) || !isShiftedAlongX && rectCenter.X - Center.X == 0)
                 {
+                    if (!isShiftedAlongX)
+                    {
+                        isShiftedAlongX = true;
+                        dx = 0;
+                        dy = rectCenter.Y - Center.Y > 0 ? -1 : 1;
+
+                        continue;
+                    }
+
                     break;
                 }
 
